@@ -1,0 +1,19 @@
+itemGroup.poorores=Бедные руды
+
+poorores.prefix=Бедная ORENAME
+poorores.nuggets.prefix=Самородок NUGGETNAME
+
+poorores.material.coal=угля
+poorores.material.diamond=алмаза
+poorores.material.emerald=изумруда
+poorores.material.gold=золота
+poorores.material.iron=железа
+poorores.material.lapis=лазурита
+poorores.material.redstone=редстоуна
+poorores.material.quartz=кварца
+poorores.material.copper=меди
+poorores.material.tin=олова
+poorores.material.lead=свинца
+poorores.material.aluminum=алюминия
+poorores.material.aluminium=алюминия
+poorores.material.osmium=осмия
