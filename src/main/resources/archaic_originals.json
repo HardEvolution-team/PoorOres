@@ -1,0 +1,18 @@
+{
+  "_comment": "Where ArchaicLib downloads the original files of this port from. Edit freely; set locked=true to keep your edits when the mod updates. Files go to archaic_originals/ and are checked by sha256.",
+  "port": "poorores",
+  "version": 3,
+  "locked": false,
+  "files": [
+    {
+      "file": "PoorOres_1.7.10_1.4.2.jar",
+      "name": "PoorOres_1.7.10_1.4.2.jar - PoorOres 1.4.2 for 1.7.10 (by Xexanos)",
+      "sha256": "ff0318b1bc221081967ef9c7158bc91cf2796fd86ef4fb867cf99779776917a2",
+      "size": 33195,
+      "page": "https://www.curseforge.com/minecraft/mc-mods/poorores/files/2223484",
+      "mirrors": [
+        "https://mediafilez.forgecdn.net/files/2223/484/PoorOres-1.7.10-1.4.2.jar"
+      ]
+    }
+  ]
+}
