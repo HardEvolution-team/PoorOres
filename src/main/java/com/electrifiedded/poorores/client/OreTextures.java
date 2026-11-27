@@ -59,6 +59,8 @@ final class OreTextures {
             return new ResourceLocation("minecraft", "textures/items/dye_powder_" + EnumDyeColor.byDyeDamage(ingot.getMetadata()).getTranslationKey() + ".png");
         if (ingot.getItem() == Items.COAL && ingot.getMetadata() == 1)
             return new ResourceLocation("minecraft", "textures/items/charcoal.png");
+        if (ingot.getItem() == Items.REDSTONE)
+            return new ResourceLocation("minecraft", "textures/items/redstone_dust.png");
         ResourceLocation reg = ingot.getItem().getRegistryName();
         return reg == null ? null : new ResourceLocation(reg.getNamespace(), "textures/items/" + reg.getPath() + ".png");
     }

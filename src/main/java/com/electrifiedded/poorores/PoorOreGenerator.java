@@ -6,7 +6,9 @@ import net.minecraft.block.state.IBlockState;
 import net.minecraft.util.math.BlockPos;
 import net.minecraft.util.math.MathHelper;
 import net.minecraft.world.World;
+import net.minecraft.world.chunk.Chunk;
 import net.minecraft.world.chunk.IChunkProvider;
+import net.minecraft.world.chunk.storage.ExtendedBlockStorage;
 import net.minecraft.world.gen.IChunkGenerator;
 import net.minecraftforge.fml.common.IWorldGenerator;
 
@@ -47,7 +49,7 @@ public class PoorOreGenerator implements IWorldGenerator {
         int baseX = chunkX * 16, baseZ = chunkZ * 16;
         // populated (loaded) area for this chunk: [base, base+32)
         int minX = baseX, maxX = baseX + 31, minZ = baseZ, maxZ = baseZ + 31;
-        BlockPos.MutableBlockPos pos = new BlockPos.MutableBlockPos();
+        Writer w = new Writer(world, chunkX, chunkZ);
         int worldTop = world.getHeight() - 1;
         for (PoorOre ore : ores) {
             IBlockState state = ore.getDefaultState();
@@ -55,15 +57,52 @@ public class PoorOreGenerator implements IWorldGenerator {
             int size = ore.getVeinSize();
             int height = Math.min(ore.getVeinHeight(), worldTop + 1);
             for (int i = 0; i <= ore.getVeinRate(); i++) {
-                vein(world, random, pos, state, target, size,
+                vein(w, random, state, target, size,
                         baseX + random.nextInt(16), random.nextInt(height), baseZ + random.nextInt(16),
                         minX, maxX, minZ, maxZ, worldTop);
             }
         }
+        w.finish();
+    }
+
+    /**
+     * Direct section access for the 2x2 population area. The chunk being populated has not been
+     * sent to any client yet, so its sections are written in place (stone -> ore keeps opacity and
+     * light, so no relight/heightmap work is needed). Neighbours that are already populated may be
+     * visible to players, so they go through World#setBlockState to stay in sync.
+     */
+    private static final class Writer {
+        final World world; final int cx, cz;
+        final Chunk[] chunks = new Chunk[4];
+        final boolean[] direct = new boolean[4], dirty = new boolean[4];
+        final BlockPos.MutableBlockPos p = new BlockPos.MutableBlockPos();
+        Writer(World world, int cx, int cz) {
+            this.world = world; this.cx = cx; this.cz = cz;
+            for (int i = 0; i < 4; i++) {
+                Chunk c = world.getChunk(cx + (i & 1), cz + (i >> 1));
+                chunks[i] = c;
+                direct[i] = i == 0 || !c.isPopulated();
+            }
+        }
+        void replace(int x, int y, int z, Block target, IBlockState state) {
+            int i = ((x >> 4) - cx) | (((z >> 4) - cz) << 1);
+            Chunk c = chunks[i];
+            if (direct[i]) {
+                ExtendedBlockStorage sec = c.getBlockStorageArray()[y >> 4];
+                if (sec == Chunk.NULL_BLOCK_STORAGE) return;
+                if (sec.get(x & 15, y & 15, z & 15).getBlock() != target) return;
+                sec.set(x & 15, y & 15, z & 15, state);
+                dirty[i] = true;
+            } else {
+                p.setPos(x, y, z);
+                if (c.getBlockState(p).getBlock() == target) world.setBlockState(p, state, 2 | 16);
+            }
+        }
+        void finish() { for (int i = 0; i < 4; i++) if (dirty[i]) chunks[i].markDirty(); }
     }
 
     /** Port of WorldGenMinable#generate with bounds clamping. */
-    private static void vein(World world, Random rand, BlockPos.MutableBlockPos p, IBlockState state, Block target, int size,
+    private static void vein(Writer w, Random rand, IBlockState state, Block target, int size,
                              int px, int py, int pz, int minX, int maxX, int minZ, int maxZ, int worldTop) {
         float f = rand.nextFloat() * (float) Math.PI;
         double s8 = size / 8.0F;
@@ -91,10 +130,7 @@ public class PoorOreGenerator implements IWorldGenerator {
                     for (int z = az; z <= bz; ++z) {
                         double dz = (z + 0.5D - cz) * inv;
                         if (dxy + dz * dz >= 1.0D) continue;
-                        p.setPos(x, y, z);
-                        if (world.getBlockState(p).getBlock() == target) {
-                            world.setBlockState(p, state, 2 | 16);
-                        }
+                        w.replace(x, y, z, target, state);
                     }
                 }
             }
